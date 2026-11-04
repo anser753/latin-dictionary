@@ -1,10 +1,10 @@
 'use strict';
 (()=>{
- const status=document.getElementById('offline-status'),button=document.getElementById('install-app'),toast=document.getElementById('offline-toast');let promptEvent,registration,announced=false;
+ const status=document.getElementById('offline-status'),button=document.getElementById('install-app');let promptEvent,registration;
  const show=text=>{status.textContent=text;};
  const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  function askWorker(worker){return new Promise((resolve,reject)=>{if(!worker){reject(Error('No active offline worker'));return;}const channel=new MessageChannel(),timer=setTimeout(()=>reject(Error('Offline status timed out')),12000);channel.port1.onmessage=e=>{clearTimeout(timer);resolve(e.data);};worker.postMessage({type:'GET_OFFLINE_STATUS'},[channel.port2]);});}
- async function updateStatus(worker){try{const result=await askWorker(worker);if(result.ready){show('Available offline · complete dictionary saved on this device.');if(!announced){announced=true;toast.textContent='Dictionary saved. Available offline.';toast.hidden=false;setTimeout(()=>{toast.hidden=true;},5500);}}else show('Saving the dictionary for offline use…');}catch{show(navigator.onLine?'Offline saving is not ready yet. Keep this page open and try again.':'Reconnect once to finish saving the dictionary.');}}
+ async function updateStatus(worker){try{const result=await askWorker(worker);if(result.ready)show('Available offline · complete dictionary saved on this device.');else show('Saving the dictionary for offline use…');}catch{show(navigator.onLine?'Offline saving is not ready yet. Keep this page open and try again.':'Reconnect once to finish saving the dictionary.');}}
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;button.hidden=installed();});
  button.addEventListener('click',async()=>{if(!promptEvent)return;const event=promptEvent;promptEvent=null;button.hidden=true;try{await event.prompt();await event.userChoice;}catch{/* Chrome’s menu remains available for installation. */}});
  window.addEventListener('appinstalled',()=>{button.hidden=true;promptEvent=null;if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});});
